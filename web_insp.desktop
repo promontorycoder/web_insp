@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Web Page Inspector
+Categories=GTK;GNOME;UtilitY;
+Exec=/home/Path/To/Your/Programs/web_insp/web_insp.py
+Icon=/home/Path/To/Your/Programs/web_insp/web_insp.png
+Path=/home/Path/To/Your/Programs/web_insp
+Terminal=false
