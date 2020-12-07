@@ -47,18 +47,15 @@ def get_info(arg):
     
 
 # Function to print builtwith and whois info to tkinter text widget
-def info():
-    
-    # Gather url from tkinter web_address (url) entry box
-    web_address = entry_web_address.get()
+def info(url):
     
     # Define variables for builtwith and whois module implemented data
-    build_info = builtwith.parse(web_address)
-    whois_info = whois.whois(web_address)
+    build_info = builtwith.parse(url)
+    whois_info = whois.whois(url)
     
     # Collect variable data and insert in tkinter text widget
     tow.insert(END, "Information for the following web address: \n")
-    tow.insert(END, web_address)
+    tow.insert(END, url)
     tow.insert(END, '\n')
     tow.insert(END, build_info)
     tow.insert(END, '\n')
@@ -66,12 +63,10 @@ def info():
 
 
 # Function to print html title search results to tkinter text widget
-def print_title():
+def print_title(url):
     
-    # Define variable for storing web address from tkinter entry box
-    web_address = entry_web_address.get()
     # Call module 'requests' to gather html data via url
-    r = requests.get(web_address)
+    r = requests.get(url)
     # Store and parse gathered data via BeautifulSoup module
     soup = BeautifulSoup(r.text, 'lxml')
     
@@ -90,11 +85,10 @@ def print_title():
 
 
 # Function to print html body text to tkinter text widget
-def print_body():
+def print_body(url):
     
     try:    
-        web_address = entry_web_address.get()
-        req = requests.get(web_address).text
+        req = requests.get(url).text
         soup = BeautifulSoup(req, 'lxml')
         
         msg = soup.get_text() # BeautifulSoup module function for html body
@@ -107,10 +101,9 @@ def print_body():
 
 
 # Function to print html tag search results to tkinter text widget
-def show_html_tags():
+def show_html_tags(url):
     
-    web_address = entry_web_address.get()
-    r = requests.get(web_address)
+    r = requests.get(url)
     soup = BeautifulSoup(r.content, 'html.parser')
         
     try:
@@ -125,10 +118,9 @@ def show_html_tags():
 
 
 # Function to test web address connectivity and print results to tk text widget
-def web_response():
+def web_response(url):
     
-    web_address = entry_web_address.get()
-    response = requests.get(web_address)
+    response = requests.get(url)
     
     
     if response.status_code == 200: # requests module check url status code
@@ -144,10 +136,9 @@ def web_response():
             
     
 # Function searches html headers and prints to tkinter text widget
-def show_headers():
+def show_headers(url):
     
-    web_address = entry_web_address.get()
-    response = requests.get(web_address)
+    response = requests.get(url)
     
     try:
         headers = response.headers # requests module function find headers
@@ -163,10 +154,9 @@ def show_headers():
 
 
 # Function finds all url links in web page and prints to tkinter text widget
-def show_urls():
+def show_urls(url):
     
-    web_address = entry_web_address.get()
-    r = requests.get(web_address).text
+    r = requests.get(url).text
     soup = BeautifulSoup(r, 'lxml')
     
     try:
@@ -181,12 +171,10 @@ def show_urls():
 
 
 # Function finds all img tags in web page and prints to tkinter text widget
-def get_img_tags():
+def get_img_tags(url):
     
-    web_address = entry_web_address.get()
-    r = requests.get(web_address)
+    r = requests.get(url)
     soup = BeautifulSoup(r.content, 'html.parser')
-    global web_images
     web_images = []
     
     try:
@@ -199,16 +187,16 @@ def get_img_tags():
     except Exception as err:
         tow.insert(END, '\n')
         tow.insert(END, err)
+        
+    return web_images
 
 
 # Function finds all images in web page and downloads images to local drive
-def images_main():
+def images_main(filepath, url):
     
-    path = entry_file_path.get()
-    url = entry_web_address.get()
     imgs = get_all_images(url)      # Call slave function: get_all_images
     for img in imgs:
-        download(img, path)         # Call slave function: download
+        download(img, filepath)         # Call slave function: download
     
 
 # Function finds all image urls in web page and delivers to images_main
@@ -239,16 +227,16 @@ def is_valid(url):
 
 
 # Function downloads target images to folder from urls via images_main
-def download(url, pathname):
+def download(url, filepath):
 
-    if not os.path.isdir(pathname): # If file path not given, create folder
-        os.makedirs(pathname)
+    if not os.path.isdir(filepath): # If file path not given, create folder
+        os.makedirs(filepath)
         
     response = requests.get(url, stream=True) # Stream for large files
     # gather integer of file size
     file_size = int(response.headers.get("Content-Length", 0))
     # Separate image file name from url
-    filename = os.path.join(pathname, url.split("/")[-1])
+    filename = os.path.join(filepath, url.split("/")[-1])
     # Create variable for storing progress of progress bar
     progress = tqdm(response.iter_content(1024), f"Downloading {filename}", 
         total=file_size, unit="B", unit_scale=True, unit_divisor=1024)
@@ -262,7 +250,7 @@ def download(url, pathname):
             
 
 # Function is work in progress: to open windows and show downloaded image files
-def show_images():
+def show_images(filepath):
 
     # Instructions for navigating pictures
     tow.insert(END, "\nMouse Left Button Click to go to next image.")
@@ -274,9 +262,9 @@ def show_images():
     image_win.geometry("400x400")
     image_win.configure(bg='gray7')
         
-    path = entry_file_path.get()
     
-    files = os.listdir(path)
+    
+    files = os.listdir(filepath)
     
     pics = []
     
@@ -284,10 +272,10 @@ def show_images():
     images_back = []
     
     for f in files:
-        pics.append(path + f)
+        pics.append(filepath + f)
     
     tow.insert(END, "\nImage files contained in folder ... \n")
-    tow.insert(END, path)
+    tow.insert(END, filepath)
     
     for pic in pics:
         
@@ -327,28 +315,23 @@ def show_images():
     img_label.bind("<Button-3>", lambda event: back(event))
     
 
-def search_output_text():
-    
-    s = entry_search_info.get()
+def search_output_text(search_criteria):
     
     idx = '1.0'
     while 1:
-        idx = tow.search(s, idx, nocase=1, stopindex=END)
+        idx = tow.search(search_criteria, idx, nocase=1, stopindex=END)
         if not idx: break
         lastidx = '%s+%dc' % (idx, len(s))
         tow.tag_add('found', idx, lastidx)
         idx = lastidx
         tow.see(idx)
     tow.tag_config('found', foreground='red')
+
+
+def print_output_text(filepath, filename):
+
     
-
-
-def print_output_text():
-
-    
-    fp = entry_file_path.get()
-    fn = entry_file_name.get()
-    new_file = (fp + fn + '.txt')
+    new_file = (filepath + filename + '.txt')
      
     date = time.strftime('%B %d, %Y')
     clock_time = time.strftime('%I:%M %p')
@@ -367,23 +350,22 @@ def print_output_text():
         file_object.write(doc_write)
 
 
-def clear_image_folder():
+def clear_image_folder(filepath):
     
     tow.insert(END, "\nClearing files from folder in file path ...")
     try:
-        path = entry_file_path.get()
         
-        if not path:
+        if not filepath:
             tow.insert(END, "\nPlease enter a folder path and try again: ")
             
         else:
                     
-            files = os.listdir(path)
+            files = os.listdir(filepath)
             
             del_files = []
             
             for file in files:
-                del_files.append(path + file)
+                del_files.append(filepath + file)
             
             for file in del_files:
                 os.remove(file)
@@ -401,8 +383,8 @@ def clear_output():
 
 
 # Function to clear web address (url) tkinter entry text box
-def clear_web_address():
-    entry_web_address.delete(0, 'end')
+def clear_url():
+    entry_url.delete(0, 'end')
     
 
 # Function to clear search criteria tkinter entry text box
@@ -411,13 +393,13 @@ def clear_search_info():
 
 
 # Function to clear file path tkinter entry text box
-def clear_file_path():
-    entry_file_path.delete(0, 'end')
+def clear_filepath():
+    entry_filepath.delete(0, 'end')
 
 
 # Function to clear file name tktinter entry text box
-def clear_file_name():
-    entry_file_name.delete(0, 'end')
+def clear_filename():
+    entry_filename.delete(0, 'end')
 
 
 # Function exits program
@@ -457,7 +439,7 @@ scrollbar.config(
 
 # Create tkinter entry boxes for the root window
 # Create tkinter entry box for gathering web address (url)
-entry_web_address = Entry(root, 
+entry_url = Entry(root, 
     font = 'arial 10', 
     width=40, 
     bg='gray7', 
@@ -473,7 +455,7 @@ entry_search_info = Entry(root,
     )
 
 # Create tkinter entry box for gathering file path    
-entry_file_path = Entry(root, 
+entry_filepath = Entry(root, 
     font = 'arial 8', 
     width = 40, 
     bg='gray7', 
@@ -481,7 +463,7 @@ entry_file_path = Entry(root,
     )
 
 # Create tkinter entry box for gathering file name    
-entry_file_name = Entry(root, 
+entry_filename = Entry(root, 
     font = 'arial 8', 
     width = 40, 
     bg='gray7', 
@@ -489,15 +471,15 @@ entry_file_name = Entry(root,
     )
     
 # Place tkinter entry boxes on the root window
-entry_web_address.place(x=50, y=50)
+entry_url.place(x=50, y=50)
 entry_search_info.place(x=50, y=100)
-entry_file_path.place(x=425, y=50)
-entry_file_name.place(x=425, y=100)
+entry_filepath.place(x=425, y=50)
+entry_filename.place(x=425, y=100)
 
 
 # Create message Labels for the root window
 # Create msg label for web address (url) tkinter entry box
-label_web_address = Label(root, 
+label_url = Label(root, 
     text = "Enter a web address: ", 
     font = 'arial 12', 
     bg='gray7', 
@@ -513,7 +495,7 @@ label_search_info = Label(root,
     )
 
 # Create msg label for file path tkinter entry box    
-label_file_path = Label(root, 
+label_filepath = Label(root, 
     text = "Enter a file path:",
     font = 'arial 10', 
     bg='gray7', 
@@ -521,7 +503,7 @@ label_file_path = Label(root,
     )
 
 # Create msg label for file name tkinter entry box    
-label_file_name = Label(root, 
+label_filename = Label(root, 
     text = "Enter a file name with extension:", 
     font = 'arial 10',  
     bg='gray7', 
@@ -529,10 +511,10 @@ label_file_name = Label(root,
     )
 
 # Place Labels on the root window
-label_web_address.place(x=50, y=25)
+label_url.place(x=50, y=25)
 label_search_info.place(x=50, y=75)
-label_file_path.place(x=425, y=25)
-label_file_name.place(x=425, y=75)
+label_filepath.place(x=425, y=25)
+label_filename.place(x=425, y=75)
 
 # Create Buttons
 # Button: EXIT, function: Exit
@@ -548,7 +530,7 @@ btn_exit = Button(root,
 
 # Button: SEARCH, tkinter search entry box, function: search_website   
 btn_info = Button(root, 
-    command = info, 
+    command = lambda: info(entry_url.get()), 
     text = 'INFO', 
     font = 'arial 10', 
     bg='lime green', 
@@ -564,9 +546,9 @@ btn_clear_output = Button(root,
     fg='lime green'
     )
 
-# Button: CLEAR, tkinter web address entry box, function: clear_web_address
-btn_clear_web_address = Button(root, 
-    command = clear_web_address, 
+# Button: CLEAR, tkinter web address entry box, function: clear_url
+btn_clear_url = Button(root, 
+    command = clear_url, 
     text = 'CLEAR', 
     font = 'arial 7', 
     bg='gray7', 
@@ -584,7 +566,7 @@ btn_clear_search_info = Button(root,
 
 # Button: Print Title, function: print_title    
 btn_print_title = Button(root, 
-    command = print_title, 
+    command = lambda: print_title(entry_url.get()), 
     text = 'Print Title', 
     font = 'arial 10', 
     bg='gray7', 
@@ -593,25 +575,25 @@ btn_print_title = Button(root,
 
 # Button: Print Body, function: print_body    
 btn_print_body = Button(root,
-    command = print_body, 
+    command = lambda: print_body(entry_url.get()), 
     text = 'Print Body', 
     font = 'arial 10', 
     bg='gray7', 
     fg='lime green'
     )
 
-# Button: CLEAR, function: clear_file_path    
-btn_clear_file_path = Button(root, 
-    command = clear_file_path, 
+# Button: CLEAR, function: clear_filepath    
+btn_clear_filepath = Button(root, 
+    command = clear_filepath, 
     text = 'CLEAR', 
     font = 'arial 7', 
     bg='gray7', 
     fg='lime green'
     )
 
-# Button: CLEAR, function: clear_file_name    
-btn_clear_file_name = Button(root, 
-    command = clear_file_name, 
+# Button: CLEAR, function: clear_filename    
+btn_clear_filename = Button(root, 
+    command = clear_filename, 
     text = 'CLEAR', 
     font = 'arial 7', 
     bg='gray7', 
@@ -620,7 +602,7 @@ btn_clear_file_name = Button(root,
 
 # Button: TAGS, function: show_html_tags    
 btn_show_html_tags = Button(root, 
-    command = show_html_tags, 
+    command = lambda: show_html_tags(entry_url.get()), 
     text = 'TAGS', 
     font = 'arial 9', 
     bg='orange', 
@@ -629,7 +611,7 @@ btn_show_html_tags = Button(root,
 
 # Button: RESP, funcion: web_response    
 btn_web_response = Button(root, 
-    command = web_response, 
+    command = lambda: web_response(entry_url.get()), 
     text = 'RESP', 
     font = 'arial 9', 
     bg='yellow', 
@@ -638,7 +620,7 @@ btn_web_response = Button(root,
 
 # Button: HEADERS, function: show_headers    
 btn_show_headers = Button(root, 
-    command = show_headers, 
+    command = lambda: show_headers(entry_url.get()), 
     text = 'HEADERS', 
     font = 'arial 9', 
     bg='orange', 
@@ -647,7 +629,7 @@ btn_show_headers = Button(root,
 
 # Button: URLS, function: show_urls    
 btn_show_urls = Button(root, 
-    command = show_urls,
+    command = lambda: show_urls(entry_url.get()),
     text = 'URLS',
     font = 'arial 9', 
     bg='orange', 
@@ -656,7 +638,7 @@ btn_show_urls = Button(root,
 
 # Button: IMG TAGS, function: get_img_tags    
 btn_get_img_tags = Button(root,
-    command = get_img_tags, 
+    command = lambda: get_img_tags(entry_url.get()), 
     text = 'IMG TAGS',
     font = 'arial 9', 
     bg='yellow', 
@@ -665,7 +647,7 @@ btn_get_img_tags = Button(root,
 
 # Button: IMG-DWNLD, function: images_main    
 btn_dwnload_images = Button(root, 
-    command = images_main, 
+    command = lambda: images_main(entry_filepath.get(), entry_url.get()), 
     text = 'IMG-DWNLD',
     font = 'arial 9', 
     bg='yellow',
@@ -674,7 +656,7 @@ btn_dwnload_images = Button(root,
 
 # Button: IMG-SHOW, function: show_images    
 btn_show_images = Button(root, 
-    command = show_images, 
+    command = lambda: show_images(entry_filepath.get()), 
     text = 'IMG-SHOW', 
     font = 'arial 9', 
     bg='purple',
@@ -682,7 +664,7 @@ btn_show_images = Button(root,
     )
     
 btn_print_output_text = Button(root, 
-    command = print_output_text, 
+    command = lambda: print_output_text(entry_filepath.get(), entry_filename.get()), 
     text = 'Print Output',
     font = 'arial 10',
     bg='royal blue',
@@ -690,7 +672,7 @@ btn_print_output_text = Button(root,
     )
     
 btn_search_output_text = Button(root, 
-    command = search_output_text,
+    command = lambda: search_output_text(entry_search_info.get()),
     text = 'Search Output',
     font = 'arial 7',
     bg='lime green',
@@ -698,7 +680,7 @@ btn_search_output_text = Button(root,
     )
     
 btn_clear_image_folder = Button(root, 
-    command = clear_image_folder,
+    command = lambda: clear_image_folder(entry_filepath.get()),
     text = 'Clear Img Folder',
     font = 'arial 7', 
     bg='red',
@@ -710,12 +692,12 @@ btn_clear_image_folder = Button(root,
 btn_exit.place(x=680, y=810)
 btn_info.place(x=50, y=165)
 btn_clear_output.place(x=160, y=810)
-btn_clear_web_address.place(x=345, y=48)
+btn_clear_url.place(x=345, y=48)
 btn_clear_search_info.place(x=345, y=98)
 btn_print_title.place(x=190, y=165)
 btn_print_body.place(x=280, y=165)
-btn_clear_file_path.place(x=680, y=48)
-btn_clear_file_name.place(x=680, y=98)
+btn_clear_filepath.place(x=680, y=48)
+btn_clear_filename.place(x=680, y=98)
 btn_show_html_tags.place(x=425, y=167)
 btn_web_response.place(x=120, y=167)
 btn_show_headers.place(x=490, y=167)
